@@ -1,0 +1,107 @@
+generator client {
+    provider = "prisma-client"
+    output   = "../src/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum UserRole {
+    USER
+    ADMIN
+}
+
+enum AuthProvider {
+    GOOGLE
+    APPLE
+}
+
+model User {
+    id              String    @id @default(uuid()) @db.Uuid
+    email           String    @unique @db.VarChar(255)
+    username        String    @unique @db.VarChar(30)
+    passwordHash    String?   @db.VarChar(255)
+    role            UserRole  @default(USER)
+    emailVerifiedAt DateTime? @db.Timestamptz(3)
+    isActive        Boolean   @default(true)
+    createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+    updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+
+    artist                  Artist?
+    sessions                Session[]
+    authAccounts            AuthAccount[]
+    emailVerificationTokens EmailVerificationToken[]
+    passwordResetTokens     PasswordResetToken[]
+}
+
+model Artist {
+    id        String   @id @default(uuid()) @db.Uuid
+    userId    String   @unique @db.Uuid
+    stageName String   @db.VarChar(100)
+    bio       String?  @db.Text
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+    updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+    id               String    @id @default(uuid()) @db.Uuid
+    userId           String    @db.Uuid
+    refreshTokenHash String    @db.VarChar(255)
+    userAgent        String?   @db.Text
+    ipAddress        String?   @db.VarChar(45)
+    expiresAt        DateTime  @db.Timestamptz(3)
+    lastUsedAt       DateTime? @db.Timestamptz(3)
+    revokedAt        DateTime? @db.Timestamptz(3)
+
+    createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([expiresAt])
+}
+
+model AuthAccount {
+    id                String       @id @default(uuid()) @db.Uuid
+    userId            String       @db.Uuid
+    provider          AuthProvider
+    providerAccountId String       @db.VarChar(255)
+    createdAt         DateTime     @default(now()) @db.Timestamptz(3)
+    updatedAt         DateTime     @updatedAt @db.Timestamptz(3)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+    @@index([userId])
+}
+
+model EmailVerificationToken {
+    id        String    @id @default(uuid()) @db.Uuid
+    userId    String    @db.Uuid
+    tokenHash String    @unique @db.VarChar(255)
+    expiresAt DateTime  @db.Timestamptz(3)
+    usedAt    DateTime? @db.Timestamptz(3)
+    createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([expiresAt])
+}
+
+model PasswordResetToken {
+    id        String    @id @default(uuid()) @db.Uuid
+    userId    String    @db.Uuid
+    tokenHash String    @unique @db.VarChar(255)
+    expiresAt DateTime  @db.Timestamptz(3)
+    usedAt    DateTime? @db.Timestamptz(3)
+    createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([expiresAt])
+}
