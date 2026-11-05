@@ -1,10 +1,10 @@
 generator client {
-    provider = "prisma-client"
+    provider = "prisma-client-js"
     output   = "../src/generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
+    provider = "postgresql" 
 }
 
 enum UserRole {
@@ -62,6 +62,7 @@ model Session {
 
     @@index([userId])
     @@index([expiresAt])
+    @@index([userId, revokedAt])
 }
 
 model AuthAccount {
@@ -90,6 +91,7 @@ model EmailVerificationToken {
 
     @@index([userId])
     @@index([expiresAt])
+    @@index([userId, usedAt])
 }
 
 model PasswordResetToken {
@@ -104,4 +106,5 @@ model PasswordResetToken {
 
     @@index([userId])
     @@index([expiresAt])
+    @@index([userId, usedAt])
 }
